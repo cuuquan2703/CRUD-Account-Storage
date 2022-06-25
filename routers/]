@@ -1,0 +1,50 @@
+require("dotenv").config()
+const express = require("express")
+const argon2 = require("argon2")
+const jwt = require("jsonwebtoken")
+const User = require("../models/User")
+
+const router = express.Router()
+
+const SIGN = process.env.SIGN
+//@route POST /api/auth/login
+//@acess Public
+router.post("/login",async (req,res)=>{
+    const {username,password} = req.body
+
+    if (!username || !password){
+        return res.status(400).json({
+            success:false,
+            message: 'missing username or password'
+        })
+    }
+
+    try{
+        const user = await User.findOne({username})
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: "Incorrect username"
+            })
+        }else {
+            const checkPassword = await argon2.verify(user.password,password)
+            if (!checkPassword){
+                return res.status(400).json({
+                    success:false,
+                    messageL: "Incorret passwpord"
+                })
+            }
+
+            const token = await jwt.sign({userId:user._id},SIGN)
+            return res.status(200).json({
+                success: true,
+                message: user,
+                token
+            })
+        }
+    }catch(e){
+        console.log(e.messsage)
+    }
+})
+
+module.exports = router
