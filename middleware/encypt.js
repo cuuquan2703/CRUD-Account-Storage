@@ -1,5 +1,7 @@
+require("dotenv").config()
 const crypto = require("crypto")
 const iv = crypto.randomBytes(16);
+const secretKey = process.env.KEY
 //Encrype
 const encrypt = (text,secretKey) => {
 let key = crypto.createHash('sha256').update(String(secretKey)).digest('base64').substr(0, 32);
@@ -23,13 +25,11 @@ const encrpt = (req,res,next) =>{
     try{
         let {password} = req.body
         
-        const header = req.header('Authorization').split('.')[2]
-        console.log("Header",header)
-        const secretKey = header
         const data = encrypt(password,secretKey)
         console.log("encryptedData", data)
         console.log("De",decrypt(data.content,secretKey))  
-        password = data
+        req.body.password = data.content
+        next()
     }catch(e){
         console.log(e.message)
     }
